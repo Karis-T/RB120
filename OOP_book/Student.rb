@@ -23,7 +23,8 @@
 class Student
 
   def initialize(n, g)
-    puts @name == self
+    @name = n
+    @grade = g
   end
 
 end

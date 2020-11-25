@@ -260,6 +260,8 @@ value = Mammal::some_out_of_place_method(4)
   - **protected** method: 
     - from inside a class, `protected` methods are accessible like a `public` method
     - from outside a class, `protected` methods are just like a `private` method
+    - When a method is private, only the class - not instances of the class - can access it. 
+    - However, when a method is protected, only instances of the class or a subclass can call the method. This means we can easily share sensitive data between instances of the same class type.
 
 ```ruby
 class GoodDog
