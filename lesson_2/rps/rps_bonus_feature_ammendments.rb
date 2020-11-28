@@ -107,7 +107,7 @@ class Computer < Player
 
   def initialize
     @robot = [R2d2.new, Hal.new, Sonny.new, Number5.new, Chappie.new].sample
-    set_name
+    super
   end
 
   def set_name
