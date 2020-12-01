@@ -40,10 +40,6 @@ class Board
     unmarked_keys.empty?
   end
 
-  def someone_won?
-    !!winning_marker
-  end
-
   def winning_marker
     line_win = WINNING_LINES.select { |arr| arr if three_alike_markers?(arr) }
     line_win.empty? ? nil : @squares[line_win[0][0]].marker
@@ -103,11 +99,12 @@ end
 
 # player class
 class Player
+  attr_reader :marker, :name
+
   X_MARKER = 'X'
   O_MARKER = 'O'
   FIRST_PLAYER = 1
   SECOND_PLAYER = 2
-  attr_reader :marker, :name
 
   def initialize
     @marker = nil
@@ -130,16 +127,16 @@ class Computer < Player
   end
 
   def move(board, human)
-    computer_marker = marker
-    if board.unmarked_keys.include?(5)
-      board[5] = computer_marker
-    elsif offensive_move(board)
-      board[offensive_move(board)] = computer_marker
-    elsif defensive_move(board, human)
-      board[defensive_move(board, human)] = computer_marker
-    else
-      board[board.unmarked_keys.sample] = computer_marker
-    end
+    square = if board.unmarked_keys.include?(5)
+               5
+             elsif offensive_move(board)
+               offensive_move(board)
+             elsif defensive_move(board, human)
+               defensive_move(board, human)
+             else
+               board.unmarked_keys.sample
+             end
+    board[square] = marker
   end
 
   private
@@ -162,7 +159,11 @@ class Human < Player
   end
 
   def joinor(arr)
-    arr.length == 1 ? arr[0] : "#{arr[0..-2].join(', ')} or #{arr[-1]}"
+    if arr.length == 1
+      arr[0]
+    else
+      "#{arr[0..-2].join(', ')} or #{arr[-1]}"
+    end
   end
 
   def move(board)
@@ -170,18 +171,14 @@ class Human < Player
     square = nil
     loop do
       square = gets.chomp.to_i
-      break if board.unmarked_keys.include?(square)
-
+      break if board.unmarked_keys.include?(square) && square.class == Integer
       puts "Sorry, that's not a valid choice."
     end
     board[square] = marker
   end
 
   def assign_turn(answer)
-    @turn = case answer
-            when 'y' then FIRST_PLAYER
-            when 'n' then SECOND_PLAYER
-            end
+    @turn = (answer == 'y' ? FIRST_PLAYER : SECOND_PLAYER)
     @starting_turn = @turn
   end
 
@@ -196,7 +193,7 @@ class Human < Player
     n = ""
     loop do
       puts "Whats your name?"
-      n = gets.chomp
+      n = gets.chomp.strip
       break unless n.empty?
       puts "Sorry, must enter a value."
     end
@@ -274,7 +271,8 @@ class TTTGame
   def select_first_player
     answer = nil
     loop do
-      puts "Would you like to go first? (y, n, choose)"
+      puts "Would you like to go first?"
+      puts "type 'y'for yes, 'n' for no or 'choose' to have the computer choose"
       answer = gets.chomp
       break if %w(y n choose).include?(answer)
       puts "Sorry, that's not a valid choice."
@@ -287,7 +285,7 @@ class TTTGame
     loop do
       display_board
       player_move
-      display_result
+      display_round_result
       display_score
       break unless play_again?
       reset
@@ -298,11 +296,15 @@ class TTTGame
   def player_move
     loop do
       current_player_turn
-      break if board.someone_won? || board.full?
+      break if someone_won? || board.full?
 
       clear_screen_and_display_board
       human.turn += 1
     end
+  end
+
+  def someone_won?
+    !!board.winning_marker
   end
 
   def current_player_turn
@@ -331,7 +333,7 @@ class TTTGame
     display_board
   end
 
-  def display_result
+  def display_round_result
     clear_screen_and_display_board
 
     case board.winning_marker
